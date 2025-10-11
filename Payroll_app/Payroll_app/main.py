@@ -72,10 +72,10 @@ class PayrollApp(MDApp):
     def reset(self):
         for field in ['name', 'salary', 'other_income', 'month', 'year']:
             self.root.ids[field].text = ""
-    self.root.ids.pension_yes.active = True
-    self.root.ids.pension_val.text = ""
-    self.root.ids.tax_val.text = ""
-    self.root.ids.netpay_val.text = ""
+        self.root.ids.pension_yes.active = True
+        self.root.ids.pension_val.text = ""
+        self.root.ids.tax_val.text = ""
+        self.root.ids.netpay_val.text = ""
 
 
 if __name__ == "__main__":
