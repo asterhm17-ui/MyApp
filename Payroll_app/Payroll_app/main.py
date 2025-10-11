@@ -50,7 +50,7 @@ class PayrollApp(MDApp):
             other_income = float(self.root.ids.other_income.text)
             month = int(self.root.ids.month.text)
             year = int(self.root.ids.year.text)
-            pension = salary * 0.07 if self.root.ids.pension.active else 0
+            pension = salary * 0.07 if self.root.ids.pension_yes.active else 0
             total_income = salary + other_income
 
             brackets = self.get_tax_brackets(month, year)
@@ -64,18 +64,18 @@ class PayrollApp(MDApp):
 
             self.root.ids.pension_val.text = f"{pension:.2f}"
             self.root.ids.tax_val.text = f"{tax:.2f}"
-            self.root.ids.net_val.text = f"{net_pay:.2f}"
+            self.root.ids.netpay_val.text = f"{net_pay:.2f}"
 
         except ValueError:
-            self.root.ids.net_val.text = "Invalid input!"
+            self.root.ids.netpay_val.text = "Invalid input!"
 
     def reset(self):
         for field in ['name', 'salary', 'other_income', 'month', 'year']:
             self.root.ids[field].text = ""
-        self.root.ids.pension.active = True
-        self.root.ids.pension_val.text = ""
-        self.root.ids.tax_val.text = ""
-        self.root.ids.net_val.text = ""
+    self.root.ids.pension_yes.active = True
+    self.root.ids.pension_val.text = ""
+    self.root.ids.tax_val.text = ""
+    self.root.ids.netpay_val.text = ""
 
 
 if __name__ == "__main__":
