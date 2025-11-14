@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Payroll App</title>
+    <style>
+      :root{--bg:#f7fafc;--card:#ffffff;--muted:#475569;--accent:#2563eb}
+      body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:var(--bg);color:var(--muted)}
+      .card{width:min(820px,94vw);padding:28px;border-radius:12px;background:var(--card);box-shadow:0 8px 30px rgba(2,6,23,0.08)}
+      h1{margin:0 0 8px;font-size:20px}
+      .row{display:flex;gap:12px}
+      .col{display:flex;flex-direction:column;gap:8px}
+      label{font-size:13px;color:#0f172a}
+      input[type=text], input[type=number]{padding:10px;border-radius:8px;border:1px solid #e6edf3}
+      .controls{display:flex;gap:8px;margin-top:12px}
+      button{background:var(--accent);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+      button.secondary{background:#e6edf3;color:#0f172a}
+      .results{display:flex;gap:16px;margin-top:16px}
+      .result{flex:1;padding:12px;border-radius:8px;background:#f8fafc;text-align:center}
+      .muted{color:#64748b;font-size:13px}
+      footer{margin-top:14px;font-size:13px;color:#475569}
+      @media(min-width:720px){.row.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}}
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Payroll Calculator (Web)</h1>
+      <p class="muted">This web UI implements the same tax logic as your Kivy app. Enter values and click Calculate.</p>
+
+      <div class="row input-grid">
+        <div class="col">
+          <label for="name">Employee Name</label>
+          <input id="name" type="text" placeholder="Name" />
+
+          <label for="salary">Salary</label>
+          <input id="salary" type="number" step="0.01" placeholder="0.00" />
+
+          <label for="other_income">Other Income</label>
+          <input id="other_income" type="number" step="0.01" placeholder="0.00" />
+        </div>
+
+        <div class="col">
+          <label for="month">Month (1-12)</label>
+          <input id="month" type="number" min="1" max="12" placeholder="1" />
+
+          <label for="year">Year (e.g. 2024)</label>
+          <input id="year" type="number" min="1900" max="3000" placeholder="2024" />
+
+          <label><input id="pension_yes" type="checkbox" checked /> Deduct pension (7% of salary)</label>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="calc">Calculate</button>
+        <button id="reset" class="secondary">Reset</button>
+      </div>
+
+      <div class="results">
+        <div class="result">
+          <div class="muted">Pension</div>
+          <div id="pension_val">-</div>
+        </div>
+        <div class="result">
+          <div class="muted">Tax</div>
+          <div id="tax_val">-</div>
+        </div>
+        <div class="result">
+          <div class="muted">Net Pay</div>
+          <div id="netpay_val">-</div>
+        </div>
+      </div>
+
+      <footer>Original app: Kivy/KivyMD (native). This is a browser-compatible port of the calculation logic.</footer>
+    </div>
+
+    <script>
+      function getTaxBrackets(month, year) {
+        if (month >= 11 && year >= 2017) {
+          return [
+            [0, 2000, 0, 0],
+            [2001, 4000, 0.15, 300],
+            [4001, 7000, 0.20, 500],
+            [7001, 10000, 0.25, 850],
+            [10001, 14000, 0.30, 1350],
+            [14001, Infinity, 0.35, 2050]
+          ];
+        } else if ((year === 2017 && month < 11) || (year > 2008 && year < 2017)) {
+          return [
+            [0, 600, 0, 0],
+            [601, 1650, 0.10, 60],
+            [1651, 3200, 0.15, 142.5],
+            [3201, 5250, 0.20, 302.5],
+            [5251, 7800, 0.25, 565],
+            [7801, 10900, 0.30, 955],
+            [10901, Infinity, 0.35, 1500]
+          ];
+        } else {
+          return [];
+        }
+      }
+
+      function formatAmount(v){
+        if (typeof v !== 'number' || !isFinite(v)) return '-';
+        return v.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+      }
+
+      function calculate() {
+        const salary = parseFloat(document.getElementById('salary').value || '0');
+        const other_income = parseFloat(document.getElementById('other_income').value || '0');
+        const month = parseInt(document.getElementById('month').value || '0', 10);
+        const year = parseInt(document.getElementById('year').value || '0', 10);
+        const pension_yes = document.getElementById('pension_yes').checked;
+
+        if (isNaN(salary) || isNaN(other_income) || isNaN(month) || isNaN(year) || month < 1 || month > 12) {
+          document.getElementById('netpay_val').textContent = 'Invalid input!';
+          return;
+        }
+
+        const pension = pension_yes ? salary * 0.07 : 0;
+        const total_income = salary + other_income;
+
+        const brackets = getTaxBrackets(month, year);
+        let tax = 0;
+        for (const [lower, upper, rate, deduction] of brackets) {
+          if (total_income >= lower && total_income <= upper) {
+            tax = total_income * rate - deduction;
+            break;
+          }
+        }
+
+        const net_pay = total_income - pension - tax;
+
+        document.getElementById('pension_val').textContent = formatAmount(pension);
+        document.getElementById('tax_val').textContent = formatAmount(tax);
+        document.getElementById('netpay_val').textContent = formatAmount(net_pay);
+      }
+
+      function resetForm(){
+        document.getElementById('name').value = '';
+        document.getElementById('salary').value = '';
+        document.getElementById('other_income').value = '';
+        document.getElementById('month').value = '';
+        document.getElementById('year').value = '';
+        document.getElementById('pension_yes').checked = true;
+        document.getElementById('pension_val').textContent = '-';
+        document.getElementById('tax_val').textContent = '-';
+        document.getElementById('netpay_val').textContent = '-';
+      }
+
+      document.getElementById('calc').addEventListener('click', calculate);
+      document.getElementById('reset').addEventListener('click', resetForm);
+    </script>
+  </body>
+</html>
