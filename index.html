@@ -106,11 +106,23 @@
       }
 
       function calculate() {
-        const salary = parseFloat(document.getElementById('salary').value || '0');
-        const other_income = parseFloat(document.getElementById('other_income').value || '0');
-        const month = parseInt(document.getElementById('month').value || '0', 10);
-        const year = parseInt(document.getElementById('year').value || '0', 10);
+        // Mirror Python behavior: empty or non-numeric inputs should be treated as invalid
+        const salaryStr = document.getElementById('salary').value;
+        const otherStr = document.getElementById('other_income').value;
+        const monthStr = document.getElementById('month').value;
+        const yearStr = document.getElementById('year').value;
         const pension_yes = document.getElementById('pension_yes').checked;
+
+        // If any required field is empty, behave like Python's float()/int() raising ValueError
+        if (!salaryStr || !otherStr || !monthStr || !yearStr) {
+          document.getElementById('netpay_val').textContent = 'Invalid input!';
+          return;
+        }
+
+        const salary = parseFloat(salaryStr);
+        const other_income = parseFloat(otherStr);
+        const month = parseInt(monthStr, 10);
+        const year = parseInt(yearStr, 10);
 
         if (isNaN(salary) || isNaN(other_income) || isNaN(month) || isNaN(year) || month < 1 || month > 12) {
           document.getElementById('netpay_val').textContent = 'Invalid input!';
@@ -123,6 +135,7 @@
         const brackets = getTaxBrackets(month, year);
         let tax = 0;
         for (const [lower, upper, rate, deduction] of brackets) {
+          // Use the same inclusive comparison as Python: lower <= total_income <= upper
           if (total_income >= lower && total_income <= upper) {
             tax = total_income * rate - deduction;
             break;
